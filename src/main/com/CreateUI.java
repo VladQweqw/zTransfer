@@ -2,8 +2,6 @@ package main.com;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.InputStream;
@@ -20,7 +18,7 @@ public class CreateUI {
     private Boolean isOpen = false;
     private JPanel mainPanel;
     private final Integer width = 525;
-    private final Integer heigth = 675;
+    private final Integer heigth = 700;
 
     public static void loadResources() {
         try {

@@ -5,13 +5,31 @@ public class FileType {
     private String name;
     private String url;
     private String size;
-    private UserType author;
+    private String author;
+    private String createdAt;
+    private String updatedAt;
 
-    public UserType getAuthor() {
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(String updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public String getAuthor() {
         return author;
     }
 
-    public void setAuthor(UserType author) {
+    public void setAuthor(String author) {
         this.author = author;
     }
 

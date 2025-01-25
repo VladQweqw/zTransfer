@@ -6,7 +6,7 @@ public class RoomTypeUID {
     private String _id;
     private String name;
     private String author;
-    private List<FileType> Files;
+    private List<FileType> files;
     private String createdAt;
     private String updatedAt;
     private List<String> peopleInside;
@@ -40,8 +40,8 @@ public class RoomTypeUID {
         this.author = author;
     }
 
-    public void setFiles(List<FileType> files) {
-        Files = files;
+    public void setFiles(List<FileType> new_files) {
+        this.files = new_files;
     }
 
     public void setCreated_at(String created_at) {
@@ -56,8 +56,8 @@ public class RoomTypeUID {
         return author;
     }
 
-    public Object getFiles() {
-        return Files;
+    public List<FileType> getFiles() {
+        return files;
     }
 
     public String getCreated_at() {

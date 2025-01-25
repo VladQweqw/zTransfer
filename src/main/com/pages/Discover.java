@@ -1,11 +1,9 @@
 package main.com.pages;
 
-import com.github.weisj.jsvg.nodes.Use;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import main.com.API;
 import main.com.Types.RoomType;
-import main.com.Types.UserType;
 import main.com.UserDetails;
 
 import javax.swing.*;
@@ -173,7 +171,6 @@ public class Discover extends Page {
         for (RoomType room : rooms) {
             wrapper.add(generateRoom(room));
         }
-        System.out.println("sal");
 
         this.files_panel_el = new JScrollPane(wrapper);
         this.files_panel_el.setPreferredSize(new Dimension(width, 325));
