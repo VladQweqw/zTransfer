@@ -20,11 +20,11 @@ public class Discover extends Page {
     private JFrame frame;
     private final Integer heigth;
     private List<RoomType> rooms;
-    private API api = new API("http://192.168.1.69:3003/rooms");
+    private API api = new API("rooms");
 
     // components
     private JButton refresh_room_el;
-    private JScrollPane files_panel_el = new JScrollPane();
+    private JScrollPane roomsPanelEl = new JScrollPane();
     private JTextField room_name = new JTextField("Room name");
     private JTextField room_pass = new JTextField("Room password");
     public JButton refreshRoomBtn() {
@@ -32,21 +32,11 @@ public class Discover extends Page {
 
         refresh_room_el.addActionListener(e -> {
             getRooms();
-
-            if(files_panel_el != null) {
-                files_panel_el.setViewportView(null);
-            }
-
-            JScrollPane newRoomsPanel = roomsPanel();
-            files_panel_el.setViewportView(newRoomsPanel.getViewport().getView());
-
-            this.files_panel_el.revalidate();
-            this.files_panel_el.repaint();
+            updateRooms();
         });
 
         return refresh_room_el;
     }
-
     private Boolean joinRoom(String room_id, String password) {
         Map<String, String> credentials = new HashMap<>();
         credentials.put("user_id", UserDetails.getId());
@@ -68,7 +58,6 @@ public class Discover extends Page {
             return false;
         }
     }
-
     public void passwordModal(String room_id) {
         JDialog dialog = new JDialog(frame, "Password", true);
         dialog.setSize(300, 160);
@@ -100,6 +89,8 @@ public class Discover extends Page {
         dialog.setVisible(true);
     }
     public JPanel generateRoom(RoomType room) {
+        if(room == null) return null;
+
         JPanel file = new JPanel();
         file.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
         file.setPreferredSize(new Dimension(width - 20, 60));
@@ -128,8 +119,8 @@ public class Discover extends Page {
         file_details.add(file_name);
         file_details.add(file_size);
 
-        ImageIcon download_image = new ImageIcon(Home.class.getResource("/images/join.png"));
-        JLabel download_btn = new JLabel(download_image);
+        ImageIcon join_img = new ImageIcon(Home.class.getResource("/images/join.png"));
+        JLabel download_btn = new JLabel(join_img);
         download_btn.setPreferredSize(new Dimension(50, 50));
 
         download_btn.addMouseListener(new MouseAdapter() {
@@ -164,26 +155,17 @@ public class Discover extends Page {
         file.add(download_btn);
         return file;
     }
-    public JScrollPane roomsPanel() {
-        JPanel wrapper = new JPanel();
-        wrapper.setLayout(new GridLayout(Math.max(6, rooms.size()),1, 15, 10));
+    public void CreateRoomPanel() {
+        this.roomsPanelEl.setPreferredSize(new Dimension(width, 325));
+        this.roomsPanelEl.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        for (RoomType room : rooms) {
-            wrapper.add(generateRoom(room));
-        }
-
-        this.files_panel_el = new JScrollPane(wrapper);
-        this.files_panel_el.setPreferredSize(new Dimension(width, 325));
-        this.files_panel_el.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        return this.files_panel_el;
     }
-
     private void getRooms() {
         Type listType = new TypeToken<List<RoomType>>() {}.getType();
-        List<RoomType> rooms = (List<RoomType>) api.GET(listType);
+        List<RoomType> rooms = (List<RoomType>) api.GET("", listType);
 
         this.rooms = rooms;
-        roomsPanel();
+        updateRooms();
     }
     private JPanel createRoom() {
         JPanel wrapper = new JPanel();
@@ -195,27 +177,7 @@ public class Discover extends Page {
 
         JButton btn = new JButton("Create room");
         btn.addActionListener(e -> {
-            try {
-                Map<String, String> credentials = new HashMap<>();
-
-                System.out.println(UserDetails.getId());
-                if(UserDetails.getId() == null) throw new Exception("");
-
-                credentials.put("name", room_name.getText());
-                credentials.put("password", room_pass.getText());
-                credentials.put("author", UserDetails.getId());
-
-                Gson gson = new Gson();
-                Type roomType = new TypeToken<RoomType>() {}.getType();
-                RoomType room = (RoomType) api.POST(gson.toJson(credentials), roomType);
-            }catch (Exception ex) {
-                JOptionPane.showMessageDialog(
-                        frame,
-                        "You are not logged in",
-                        "Warning",
-                        JOptionPane.WARNING_MESSAGE
-                );
-            }
+            postRoom();
         });
 
         wrapper.add(room_name);
@@ -224,13 +186,64 @@ public class Discover extends Page {
 
         return wrapper;
     }
+    public void updateRooms() {
+        JPanel wrapper = new JPanel();
+
+        if(rooms != null) {
+            wrapper.setLayout(new GridLayout(Math.max(6, rooms.size()), 1, 15, 10));
+
+            if (rooms.size() > 0) {
+                for (RoomType room : rooms) {
+                    JPanel p = generateRoom(room);
+                    p.revalidate();
+                    p.repaint();
+
+                    wrapper.add(p);
+                }
+            } else {
+                System.out.println("No rooms");
+            }
+        }
+
+        wrapper.revalidate();
+        wrapper.repaint();
+
+        roomsPanelEl.setViewportView(wrapper);
+        roomsPanelEl.revalidate();
+        roomsPanelEl.repaint();
+    }
+
+    // API
+    public void postRoom() {
+        try {
+            Map<String, String> credentials = new HashMap<>();
+            if(UserDetails.getId() == null) throw new Exception("");
+
+            credentials.put("name", room_name.getText());
+            credentials.put("password", room_pass.getText());
+            credentials.put("author", UserDetails.getId());
+
+            Gson gson = new Gson();
+            Type roomType = new TypeToken<RoomType>() {}.getType();
+            api.POST("", gson.toJson(credentials), roomType);
+
+            updateRooms();
+        }catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "You are not logged in",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+        }
+    }
 
     public Discover(Integer width, Integer height, JFrame frame) {
         this.width = width - 100;
         this.heigth = height;
         this.frame = frame;
-        getRooms();
 
+        panel.add(roomsPanelEl);
         JLabel title = new JLabel("All rooms");
         title.setPreferredSize(new Dimension(width - 20, 30));
         title.setHorizontalAlignment(SwingUtilities.CENTER);
@@ -238,7 +251,10 @@ public class Discover extends Page {
         panel.add(createRoom());
         panel.add(refreshRoomBtn());
 
-        panel.add(files_panel_el);
+        panel.add(roomsPanelEl);
+
+        getRooms();
+        CreateRoomPanel();
     }
 
     public JPanel getPanel() {

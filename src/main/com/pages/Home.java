@@ -33,7 +33,7 @@ public class Home extends Page {
     private Wrapper wrapper;
     private List<RoomTypeUID> rooms = null;
     private RoomTypeUID selectedRoom;
-    private API api = new API("http://192.168.1.69:3003/users/");
+    private API api = new API();
 
     // components
     private JLabel selectedFilePath = new JLabel();
@@ -126,7 +126,6 @@ public class Home extends Page {
 
         return add_file_el;
     }
-
     public JPanel createFile(FileType fileObj) {
         if(fileObj == null) return null;
 
@@ -187,7 +186,6 @@ public class Home extends Page {
         filesPanelEl.setPreferredSize(new Dimension(width, 325));
         filesPanelEl.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     }
-
     public void downloadFile(String path, String dir) {
         HttpClient client = HttpClient.newHttpClient();
 
@@ -265,11 +263,11 @@ public class Home extends Page {
     public void getRooms() {
         Type listType = new TypeToken<List<RoomTypeUID>>() {}.getType();
         if(UserDetails.getId() != null) {
-            List<RoomTypeUID> rooms = (List<RoomTypeUID>) api.GET(UserDetails.getId() + "/rooms", listType);
+            List<RoomTypeUID> rooms = (List<RoomTypeUID>) api.GET("users/" + UserDetails.getId() + "/rooms", listType);
             this.rooms = rooms;
 
         }else {
-            System.out.println("No user");
+            System.out.println("User not logged in");
         }
     }
 
@@ -281,7 +279,7 @@ public class Home extends Page {
 
         Type fileType = new TypeToken<FileType>() {}.getType();
         FileType file = (FileType) api.POSTFile(
-                "http://192.168.1.69:3003/files?room_id=" + selectedRoom.get_id(),
+                "files?room_id=" + selectedRoom.get_id(),
                 fileType,
                 credentials);
 
@@ -295,29 +293,20 @@ public class Home extends Page {
         this.wrapper = new Wrapper(this.width, this.heigth);
         this.frame = frame;
 
-        getRooms();
-        createSavedRooms();
-        createFilesPanel();
-
         panel.add(savedRoomsCombo);
-        panel.add(
-                wrapper.Wrap(enterRoomBtn(), leaveRoomByn())
-        );
+        panel.add(wrapper.Wrap(enterRoomBtn(), leaveRoomByn()));
 
         room_id_el.setPreferredSize(new Dimension(350, 40));
-        panel.add(
-                wrapper.Wrap(room_id_el, refreshRoomBtn(), 45)
-        );
-
+        panel.add(wrapper.Wrap(room_id_el, refreshRoomBtn(), 45));
 
         panel.add(filesPanelEl);
-
-        panel.add(
-                wrapper.Wrap(fileExplorerBtn(), addFileBtn())
-        );
+        panel.add(wrapper.Wrap(fileExplorerBtn(), addFileBtn()));
 
         panel.add(selectedFilePath);
 
+        getRooms();
+        createSavedRooms();
+        createFilesPanel();
     }
 
     public JPanel getPanel() {

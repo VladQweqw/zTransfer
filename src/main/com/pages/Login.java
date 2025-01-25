@@ -3,6 +3,7 @@ package main.com.pages;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import main.com.API;
+import main.com.Exceptions.InvalidCredentials;
 import main.com.Types.UserType;
 import main.com.UserDetails;
 
@@ -18,14 +19,13 @@ public class Login extends Page {
     private JFrame frame;
     private final Integer width;
     private final Integer heigth;
-    private API api = new API<UserType>("http://192.168.1.69:3003/users");
+    private API api = new API<UserType>("users");
+
     // components
     private JScrollPane files_panel_el = new JScrollPane();
-
     private JTextField username_field = new JTextField("Username");
     private JPasswordField password_field = new JPasswordField("Password");;
     private JLabel username_el = new JLabel("Not logged in");
-
     private JTextField username_field() {
         username_field.setPreferredSize(new Dimension(width, 40));
 
@@ -47,7 +47,6 @@ public class Login extends Page {
 
         return username_field;
     }
-
     private JTextField password_field() {
         password_field.setPreferredSize(new Dimension(width, 40));
 
@@ -69,37 +68,15 @@ public class Login extends Page {
 
         return password_field;
     }
-
     private JButton submitBtn() {
         JButton login = new JButton("Log in / Register");
 
         login.addActionListener(e -> {
-            Map<String, String> credentials = new HashMap<>();
-            credentials.put("username", username_field.getText());
-            credentials.put("password", password_field.getText());
-
-            Gson gson = new Gson();
-            Type userType = new TypeToken<UserType>() {}.getType();
-            UserType user = (UserType) api.POST(gson.toJson(credentials), userType);
-
-            try {
-                UserDetails.setUser(user);
-                if(UserDetails.getId() == null) throw new Exception("");
-                this.username_el.setText("User: " + UserDetails.getUsername());
-            }catch(Exception ex) {
-                JOptionPane.showMessageDialog(
-                        frame,
-                        "Wrong Password",
-                        "Warning",
-                        JOptionPane.WARNING_MESSAGE
-                );
-            }
-
+            loginUser();
         });
 
         return login;
     }
-
     private JButton logoutBtn() {
         JButton login = new JButton("Logout");
 
@@ -110,6 +87,33 @@ public class Login extends Page {
         });
 
         return login;
+    }
+
+    // API
+    public void loginUser() {
+        Map<String, String> credentials = new HashMap<>();
+        credentials.put("username", username_field.getText());
+        credentials.put("password", password_field.getText());
+
+        Gson gson = new Gson();
+        Type userType = new TypeToken<UserType>() {}.getType();
+        UserType user = (UserType) api.POST("", gson.toJson(credentials), userType);
+
+        try {
+            UserDetails.setUser(user);
+
+            this.username_el.setText("User: " + UserDetails.getUsername());
+        }catch(Exception ex) {
+            System.out.println(
+                    new InvalidCredentials("Invalid password or name").getMessage()
+            );
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Wrong Password",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+        }
     }
 
     public Login(Integer width, Integer height, JFrame frame) {
