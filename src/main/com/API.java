@@ -6,16 +6,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpClient;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import com.google.gson.reflect.TypeToken;
-
 
 import com.google.gson.Gson;
-import main.com.Types.RoomType;
-import main.com.Types.UserType;
-
 public class API<T> {
     private String ENDPOINT = "http://192.168.1.69:3003/";
 

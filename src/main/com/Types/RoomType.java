@@ -7,9 +7,10 @@ public class RoomType {
     private String name;
     private UserType author;
     private List<FileType> Files;
-    private String created_at;
-    private String updated_at;
+    private String createdAt;
+    private String updatedAt;
     private List<String> peopleInside;
+
 
     public void setPeopleInside(List<String> peopleInside) {
         this.peopleInside = peopleInside;
@@ -44,11 +45,11 @@ public class RoomType {
     }
 
     public void setCreated_at(String created_at) {
-        this.created_at = created_at;
+        this.createdAt = created_at;
     }
 
     public void setUpdated_at(String updated_at) {
-        this.updated_at = updated_at;
+        this.updatedAt = updated_at;
     }
 
     public UserType getAuthor() {
@@ -60,10 +61,10 @@ public class RoomType {
     }
 
     public String getCreated_at() {
-        return created_at;
+        return createdAt;
     }
 
     public String getUpdated_at() {
-        return updated_at;
+        return updatedAt;
     }
 }
