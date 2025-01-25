@@ -10,10 +10,17 @@ import main.com.UserDetails;
 import main.com.Wrapper;
 
 import javax.swing.*;
+import javax.tools.FileObject;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +29,6 @@ public class Home extends Page {
     private JPanel panel = new JPanel();
     private JFrame frame;
     private String file_path = "";
-    private String save_dir = "";
     private final Integer width;
     private final Integer heigth;
     private Wrapper wrapper;
@@ -121,6 +127,7 @@ public class Home extends Page {
 
         return add_file_el;
     }
+
     public JPanel createFile(FileType fileObj) {
         if(fileObj == null) return null;
 
@@ -148,6 +155,17 @@ public class Home extends Page {
         download_btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                JFileChooser chooser = new JFileChooser();
+
+                chooser.setSelectedFile(new File(fileObj.getName()));
+
+                int res = chooser.showOpenDialog(panel);
+                if(res == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = chooser.getSelectedFile();
+                    String dir = selectedFile.getAbsolutePath();
+                    downloadFile(fileObj.getUrl(), dir);
+                }
+
                 System.out.println(fileObj.getUrl());
             }
 
@@ -171,7 +189,26 @@ public class Home extends Page {
         filesPanelEl.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     }
 
-    public void downloadFile(String path) {
+    public void downloadFile(String path, String dir) {
+        HttpClient client = HttpClient.newHttpClient();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(path))
+                .build();
+
+        try {
+            HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(Paths.get(dir)));
+
+            if(response.statusCode() == 200) {
+                System.out.println("Downloaded");
+                System.out.println(response.body());
+            }else {
+                System.out.println("Failed");
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("err");
+        }
 
     }
 
@@ -248,7 +285,6 @@ public class Home extends Page {
                 fileType,
                 credentials);
 
-        System.out.println(file);
     }
 
     public Home(Integer width, Integer height, JFrame frame) {
