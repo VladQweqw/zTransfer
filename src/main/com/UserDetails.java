@@ -7,12 +7,14 @@ import java.util.ArrayList;
 public class UserDetails {
     private ArrayList<String> saved_rooms = new ArrayList();
 
-    public static UserType user;
+    public static UserType user = new UserType();
 
     public static boolean logout() {
         user = null;
         return true;
     }
+
+
 
     public static void setUser(UserType new_user) {
         user = new_user;

@@ -1,16 +1,15 @@
 package main.com.pages;
 
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import main.com.API;
 import main.com.Types.FileType;
-import main.com.Types.RoomType;
+
 import main.com.Types.RoomTypeUID;
 import main.com.UserDetails;
 import main.com.Wrapper;
 
 import javax.swing.*;
-import javax.tools.FileObject;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -264,12 +263,13 @@ public class Home extends Page {
 
     // API
     public void getRooms() {
-        try {
-            Type listType = new TypeToken<List<RoomTypeUID>>() {}.getType();
+        Type listType = new TypeToken<List<RoomTypeUID>>() {}.getType();
+        if(UserDetails.getId() != null) {
             List<RoomTypeUID> rooms = (List<RoomTypeUID>) api.GET(UserDetails.getId() + "/rooms", listType);
             this.rooms = rooms;
-        }catch (Exception ex) {
-            ex.printStackTrace();
+
+        }else {
+            System.out.println("No user");
         }
     }
 
@@ -284,6 +284,8 @@ public class Home extends Page {
                 "http://192.168.1.69:3003/files?room_id=" + selectedRoom.get_id(),
                 fileType,
                 credentials);
+
+        System.out.println(file);
 
     }
 

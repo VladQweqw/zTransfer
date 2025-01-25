@@ -24,48 +24,38 @@ public class API<T> {
 
     }
 
-    public String createMultipartBody(Map<String, String> credentials, String boundary) throws IOException {
+    public byte[] createMultipartBody(Map<String, String> credentials, String boundary) throws IOException {
         Path filePath = Path.of(credentials.get("upload_file"));
         String author = credentials.get("author");
         String name = credentials.get("name");
 
-        // Start building the multipart body
-        StringBuilder sb = new StringBuilder();
+        // Use ByteArrayOutputStream for binary-safe operations
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         // Add author field
-        sb.append("--").append(boundary).append("\r\n");
-        sb.append("Content-Disposition: form-data; name=\"author\"\r\n\r\n");
-        sb.append(author).append("\r\n");
+        baos.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write(("Content-Disposition: form-data; name=\"author\"\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write((author + "\r\n").getBytes(StandardCharsets.UTF_8));
 
         // Add name field
-        sb.append("--").append(boundary).append("\r\n");
-        sb.append("Content-Disposition: form-data; name=\"name\"\r\n\r\n");
-        sb.append(name).append("\r\n");
+        baos.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write(("Content-Disposition: form-data; name=\"name\"\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write((name + "\r\n").getBytes(StandardCharsets.UTF_8));
 
-        // Add the file field
-        sb.append("--").append(boundary).append("\r\n");
-        sb.append("Content-Disposition: form-data; name=\"upload_file\"; filename=\"")
-                .append(filePath.getFileName()).append("\"\r\n");
-        sb.append("Content-Type: application/octet-stream\r\n\r\n");
+        // Add file field
+        baos.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write(("Content-Disposition: form-data; name=\"upload_file\"; filename=\"" + filePath.getFileName() + "\"\r\n").getBytes(StandardCharsets.UTF_8));
+        baos.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8));
 
-        // Get the file content as a byte array
-        byte[] fileData = Files.readAllBytes(filePath);
+        // Add the file bytes
+        byte[] fileBytes = Files.readAllBytes(filePath);
+        baos.write(fileBytes);
+        baos.write("\r\n".getBytes(StandardCharsets.UTF_8));
 
-        // Convert StringBuilder to byte array
-        byte[] headerBytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+        // End boundary
+        baos.write(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
 
-        // Prepare final byte array (header + file data + closing boundary)
-        byte[] finalRequest = new byte[headerBytes.length + fileData.length + ("--" + boundary + "--\r\n").getBytes().length];
-
-        // Copy the header bytes to the final byte array
-        System.arraycopy(headerBytes, 0, finalRequest, 0, headerBytes.length);
-        // Copy the file data to the final byte array
-        System.arraycopy(fileData, 0, finalRequest, headerBytes.length, fileData.length);
-        // Append the closing boundary
-        System.arraycopy(("--" + boundary + "--\r\n").getBytes(), 0, finalRequest, headerBytes.length + fileData.length, ("--" + boundary + "--\r\n").length());
-
-        // Return the multipart body as a string (but it is actually byte data that will be sent)
-        return new String(finalRequest, StandardCharsets.UTF_8);
+        return baos.toByteArray();
     }
 
 
@@ -94,13 +84,13 @@ public class API<T> {
 
         try {
             String boundary = "Boundary-" + System.currentTimeMillis();
-            String multipartBody = createMultipartBody(credentials, boundary);
+            byte[] multipartBody = createMultipartBody(credentials, boundary);
             System.out.println(multipartBody);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                    .POST(HttpRequest.BodyPublishers.ofString(multipartBody))
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(multipartBody))
                     .build();
 
             HttpResponse<String> response = null;
@@ -108,6 +98,7 @@ public class API<T> {
             try {
                 response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
                 Gson gson = new Gson();
+                System.out.println(response.body());
                 return gson.fromJson(response.body(), typeOfT);
             }catch (IOException e) {
                 e.printStackTrace();
