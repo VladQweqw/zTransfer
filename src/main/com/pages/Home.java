@@ -1,86 +1,77 @@
 package main.com.pages;
 
+import com.google.gson.reflect.TypeToken;
+import main.com.API;
+import main.com.Types.RoomType;
+import main.com.Types.RoomTypeUID;
+import main.com.UserDetails;
 import main.com.Wrapper;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.lang.reflect.Type;
+import java.util.List;
 
 public class Home extends Page {
     private JPanel panel = new JPanel();
     private JFrame frame;
-
     private String file_path = "";
     private final Integer width;
     private final Integer heigth;
-    private String room_id = "";
     private Wrapper wrapper;
+    private List<RoomTypeUID> rooms = null;
+    private RoomTypeUID selectedRoom;
+
+    private API api = new API("http://192.168.1.69:3003/users/");
 
     // components
-    private JTextField room_id_field;
     private JButton enter_room_el;
-    private JComboBox saved_rooms_el;
+    private DefaultComboBoxModel<RoomTypeUID> savedRoomsModel = new DefaultComboBoxModel<>();
+    private JComboBox savedRoomsCombo = new JComboBox(savedRoomsModel);
     private JButton file_explorer_el;
     private JButton add_file_el;
     private JLabel room_id_el = new JLabel("Room id: ");
     private JButton refresh_room_el;
     private JScrollPane files_panel_el;
 
-    private JTextField roomIdField() {
-        String default_text = "Room ID";
-
-        room_id_field = new JTextField();
-        room_id_field.setText(default_text);
-        room_id_field.setPreferredSize(new Dimension(width, 40));
-
-        room_id_field.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if(room_id_field.getText().equals(default_text)) {
-                    room_id_field.setText("");
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if(room_id_field.getText().isEmpty()) {
-                    room_id_field.setText(default_text);
-                }
-            }
-        });
-
-
-        return room_id_field;
-    }
-
     private JButton enterRoomBtn() {
         enter_room_el = new JButton("Enter room");
         enter_room_el.setPreferredSize(new Dimension((width / 2) - 20, 40));
 
         enter_room_el.addActionListener(e -> {
-            this.room_id = room_id_field.getText();
-            SetRoomId();
+            UpdateRoomID();
+
         });
 
         return enter_room_el;
     }
-    private JComboBox savedRoomsBtn() {
-        String[] items = {"a", "b", "C"};
+    private void createSavedRooms() {
+        if(rooms == null) return;
 
-        saved_rooms_el = new JComboBox<>(items);
-        saved_rooms_el.setPreferredSize(new Dimension((width / 2) - 20, 40));
-        saved_rooms_el.setSelectedIndex(0);
+        DefaultComboBoxModel<RoomTypeUID> model = new DefaultComboBoxModel<>();
+        model.addAll(rooms);
 
-        saved_rooms_el.addActionListener(new ActionListener() {
+        JComboBox elem = new JComboBox<>(model);
+        elem.setPreferredSize(new Dimension((width / 2) - 20, 40));
+        elem.setSelectedIndex(0);
+
+        elem.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedItem = (String) saved_rooms_el.getSelectedItem();
-                room_id = selectedItem;
-                SetRoomId();
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+                if (value instanceof RoomTypeUID) {
+                    RoomTypeUID room = (RoomTypeUID) value;
+                    this.setText(room.getName());
+                }
+
+                return this;
             }
         });
-        return saved_rooms_el;
+
+        this.savedRoomsCombo = elem;
     }
     private JButton fileExplorerBtn() {
         file_explorer_el = new JButton("Select file");
@@ -110,16 +101,6 @@ public class Home extends Page {
 
         return add_file_el;
     }
-    public JButton refreshRoomBtn() {
-        refresh_room_el = new JButton("Refresh");
-
-        refresh_room_el.addActionListener(e -> {
-            System.out.println("refresh");
-        });
-
-        return refresh_room_el;
-    }
-
     public JPanel createFile() {
         JPanel file = new JPanel();
         file.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
@@ -181,12 +162,41 @@ public class Home extends Page {
         return files_panel_el;
     }
 
+    // UI update
+    public JButton refreshRoomBtn() {
+        refresh_room_el = new JButton("Refresh");
+
+        refresh_room_el.addActionListener(e -> {
+            updateSavedRooms();
+        });
+
+        return refresh_room_el;
+    }
+    private void updateSavedRooms() {
+        getRooms();
+        savedRoomsModel.removeAllElements();
+        savedRoomsModel.addAll(this.rooms);
+
+        savedRoomsCombo.addActionListener(e -> {
+            RoomTypeUID room = (RoomTypeUID) savedRoomsCombo.getSelectedItem();
+            this.selectedRoom = room;
+        });
+    }
+
     //
+    public void UpdateRoomID() {
+        this.room_id_el.setText("Room id: " + selectedRoom.get_id());
+    }
 
-    public void SetRoomId() {
-        this.room_id_field.setText(room_id);
-        this.room_id_el.setText("Room id: " + room_id);
-
+    // API
+    public void getRooms() {
+        try {
+            Type listType = new TypeToken<List<RoomTypeUID>>() {}.getType();
+            List<RoomTypeUID> rooms = (List<RoomTypeUID>) api.GET(UserDetails.getId() + "/rooms", listType);
+            this.rooms = rooms;
+        }catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     public Home(Integer width, Integer height, JFrame frame) {
@@ -195,9 +205,11 @@ public class Home extends Page {
         this.wrapper = new Wrapper(this.width, this.heigth);
         this.frame = frame;
 
-        panel.add(roomIdField());
+        getRooms();
+        createSavedRooms();
+
         panel.add(
-                wrapper.Wrap(enterRoomBtn(), savedRoomsBtn())
+                wrapper.Wrap(enterRoomBtn(), savedRoomsCombo)
         );
 
         room_id_el.setPreferredSize(new Dimension(350, 40));

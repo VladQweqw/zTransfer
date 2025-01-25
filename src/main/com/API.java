@@ -105,4 +105,25 @@ public class API<T> {
         return null;
     }
 
+    public <T> T GET(String url, Type typeOfT) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ENDPOINT + url))
+                .method("GET", HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> response = null;
+        try {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            Gson gson = new Gson();
+
+            return gson.fromJson(response.body(), typeOfT);
+        }catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
 }

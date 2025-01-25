@@ -188,8 +188,6 @@ public class Discover extends Page {
         this.rooms = rooms;
         roomsPanel();
     }
-
-
     private JPanel createRoom() {
         JPanel wrapper = new JPanel();
         wrapper.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
